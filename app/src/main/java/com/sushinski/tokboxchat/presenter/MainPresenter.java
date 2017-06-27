@@ -9,7 +9,11 @@ import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
 import com.sushinski.tokboxchat.interfaces.IRequiredOpenTokViewOps;
 import com.sushinski.tokboxchat.managers.OpenTokAuthManager;
 import com.sushinski.tokboxchat.managers.SessionManager;
+import com.sushinski.tokboxchat.model.EventMessage;
 import com.sushinski.tokboxchat.view.MainActivity;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 public class MainPresenter  implements  IRequiredPresenterOps{
     private IRequiredOpenTokViewOps mView;
@@ -18,10 +22,16 @@ public class MainPresenter  implements  IRequiredPresenterOps{
 
     public MainPresenter(@NonNull IRequiredOpenTokViewOps view){
         mView = view;
+        EventBus.getDefault().register(this);
         if(mView.hasOpenTokViewPermissions()){
             mSesManager = new SessionManager(this);// todo retain session state(keys etc)
             mAuthManager = new OpenTokAuthManager().setListener(mSesManager).build();
         }
+    }
+
+
+    @Override
+    public void onStart() {
     }
 
     @Override
@@ -31,7 +41,8 @@ public class MainPresenter  implements  IRequiredPresenterOps{
 
     @Override
     public void onDestroy() {
-
+        EventBus.getDefault().unregister(this);
+        mView = null;
     }
 
     @Override
@@ -61,6 +72,14 @@ public class MainPresenter  implements  IRequiredPresenterOps{
     public void clearAllViews() {
         if(mView != null){
             mView.clearViews();
+        }
+    }
+
+    @Subscribe
+    public void onEvent(EventMessage message) {
+        if(mView != null){
+            String message_text = mView.getContext().getString(message.getMessageId());
+            mView.showStatusMessage(message_text);
         }
     }
 }

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.view.View;
 
 public interface IRequiredPresenterOps {
+    void onStart();
     void onPause();
     void onDestroy();
     Context getViewContext();

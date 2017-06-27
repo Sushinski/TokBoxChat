@@ -13,22 +13,31 @@ import android.support.annotation.NonNull;
 
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import org.greenrobot.eventbus.EventBus;
 
 
 public class MainActivity extends AppCompatActivity implements IRequiredOpenTokViewOps {
 
     private FrameLayout mPublisherViewContainer;
-    private FrameLayout mSubscriberViewContainer;
+    private RelativeLayout mSubscriberViewContainer;
     private PermissionManager mPermissionManager;
     public MainPresenter mPresenter;
+    private TextView mStatusString;
+    private ProgressBar mProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mPublisherViewContainer = (FrameLayout)findViewById(R.id.publisher_container);
-        mSubscriberViewContainer = (FrameLayout)findViewById(R.id.subscriber_container);
-        mPresenter = new MainPresenter(this);
+        mSubscriberViewContainer = (RelativeLayout)findViewById(R.id.subscriber_container);
+        mStatusString = (TextView) findViewById(R.id.textView3);
+        mProgress = (ProgressBar) findViewById(R.id.progressBar2);
+        mPresenter = new MainPresenter(this); // todo inject this
     }
 
     @Override
@@ -44,6 +53,24 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
         return mPermissionManager.isPermissionsGranted();
     }
 
+    @Override
+    public void onStart(){
+        super.onStart();
+        mPresenter.onStart();
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        mPresenter.onPause();
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        mPresenter.onDestroy();
+    }
+
 
     @Override
     public void addPublisherView(View view) {
@@ -52,19 +79,27 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
 
     @Override
     public void addSubscriberView(View view) {
+        mStatusString.setVisibility(View.GONE);
+        mProgress.setVisibility(View.GONE);
         mSubscriberViewContainer.addView(view);
     }
 
     @Override
     public void clearViews() {
+        mStatusString.setVisibility(View.VISIBLE);
+        mProgress.setVisibility(View.VISIBLE);
         mSubscriberViewContainer.removeAllViews();
+    }
+
+    @Override
+    public void showStatusMessage(String message) {
+        mStatusString.setText(message);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         mPermissionManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
