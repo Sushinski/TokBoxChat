@@ -1,10 +1,13 @@
 package com.sushinski.tokboxchat.view;
 
 import android.content.Context;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import com.sushinski.tokboxchat.R;
+import com.sushinski.tokboxchat.data_source.PresenterHolderFragment;
 import com.sushinski.tokboxchat.di.DaggerMainComponent;
 import com.sushinski.tokboxchat.di.MainComponent;
 import com.sushinski.tokboxchat.di.MainModule;
@@ -37,14 +40,30 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        MainComponent di_component = DaggerMainComponent.builder().
-                mainModule(new MainModule(this)).build();
         setContentView(R.layout.activity_main);
         mPublisherViewContainer = (FrameLayout)findViewById(R.id.publisher_container);
         mSubscriberViewContainer = (RelativeLayout)findViewById(R.id.subscriber_container);
         mStatusString = (TextView) findViewById(R.id.textView3);
         mProgress = (ProgressBar) findViewById(R.id.progressBar2);
-        mPresenter = di_component.getMainPresenter();
+        initPresenter();
+    }
+
+    void initPresenter(){
+        FragmentManager fm = getSupportFragmentManager();
+        PresenterHolderFragment phf =
+                (PresenterHolderFragment) fm.
+                        findFragmentByTag(IRequiredPresenterOps.PRESENTER_TAG);
+        if(phf == null){
+            MainComponent di_component = DaggerMainComponent.builder().
+                    mainModule(new MainModule(this)).build();
+            mPresenter = di_component.getMainPresenter();
+            phf = new PresenterHolderFragment();
+            phf.setRetainedPresenter(mPresenter);
+            fm.beginTransaction().add(phf, IRequiredPresenterOps.PRESENTER_TAG).commit();
+        }else{
+            mPresenter = phf.getRetainedPresenter();
+        }
+        mPresenter.setView(this);
     }
 
     @Override

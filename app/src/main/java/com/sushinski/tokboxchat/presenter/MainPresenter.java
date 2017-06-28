@@ -31,16 +31,26 @@ public class MainPresenter  implements  IRequiredPresenterOps{
         ManagerComponent component = DaggerManagerComponent.builder().
                 managerModule(new ManagerModule(this)).build();
         mView = view;
-        EventBus.getDefault().register(this);
         if(mView.hasOpenTokViewPermissions()){
-            mSesListener = component.getSessionListener();// todo retain session state(keys etc)
+            mSesListener = component.getSessionListener();
             mAuthManager = component.getAuthManager();
         }
     }
 
 
     @Override
+    public void setView(IRequiredOpenTokViewOps view) {
+        mView = view;
+    }
+
+    @Override
+    public void onCreate() {
+
+    }
+
+    @Override
     public void onStart() {
+        EventBus.getDefault().register(this);
     }
 
     @Override

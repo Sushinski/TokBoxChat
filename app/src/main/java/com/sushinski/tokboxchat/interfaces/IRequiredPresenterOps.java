@@ -5,6 +5,9 @@ import android.content.Context;
 import android.view.View;
 
 public interface IRequiredPresenterOps extends IRequiredOpenTokOps {
+    public static final String PRESENTER_TAG = "OpenTokPresenter";
+    void setView(IRequiredOpenTokViewOps view);
+    void onCreate();
     void onStart();
     void onPause();
     void onDestroy();
