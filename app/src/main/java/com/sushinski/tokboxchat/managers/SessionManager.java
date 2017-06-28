@@ -15,6 +15,8 @@ import com.sushinski.tokboxchat.model.EventMessage;
 import com.sushinski.tokboxchat.model.OpenTokSession;
 import org.greenrobot.eventbus.EventBus;
 
+import javax.inject.Inject;
+
 public class SessionManager implements
         ISessionListener,
         Session.SessionListener,
@@ -23,6 +25,10 @@ public class SessionManager implements
     private Session mSession;
     private Publisher mPublisher;
     private Subscriber mSubscriber;
+
+    @Inject
+    public SessionManager(){
+    }
 
     public SessionManager(@NonNull IRequiredPresenterOps presenter){
         mPresenter = presenter;
@@ -47,11 +53,12 @@ public class SessionManager implements
 
     @Override
     public void onDisconnected(Session session) {
-        EventBus.getDefault().post(
+        /*EventBus.getDefault().post(
                 new EventMessage(
                         EventMessage.Type.INFO,
                         R.string.pending_connection,
-                        ""));
+                        ""));*/
+        mPresenter.clearPublisherView();
     }
 
     @Override
@@ -68,7 +75,7 @@ public class SessionManager implements
     public void onStreamDropped(Session session, Stream stream) {
         if (mSubscriber != null) {
             mSubscriber = null;
-            mPresenter.clearAllViews();
+            mPresenter.clearSubscriberView();
         }
         EventBus.getDefault().post(
                 new EventMessage(
@@ -96,5 +103,10 @@ public class SessionManager implements
 
     @Override
     public void onError(PublisherKit publisherKit, OpentokError opentokError) {
+        EventBus.getDefault().post(
+                new EventMessage(
+                        EventMessage.Type.ERROR,
+                        R.string.pending_connection,
+                        ""));
     }
 }

@@ -5,27 +5,36 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.view.View;
 
+import com.sushinski.tokboxchat.di.DaggerManagerComponent;
+import com.sushinski.tokboxchat.di.ManagerComponent;
+import com.sushinski.tokboxchat.di.ManagerModule;
 import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
 import com.sushinski.tokboxchat.interfaces.IRequiredOpenTokViewOps;
+import com.sushinski.tokboxchat.interfaces.ISessionListener;
 import com.sushinski.tokboxchat.managers.OpenTokAuthManager;
 import com.sushinski.tokboxchat.managers.SessionManager;
 import com.sushinski.tokboxchat.model.EventMessage;
+import com.sushinski.tokboxchat.model.OpenTokSession;
 import com.sushinski.tokboxchat.view.MainActivity;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+import javax.inject.Inject;
+
 public class MainPresenter  implements  IRequiredPresenterOps{
     private IRequiredOpenTokViewOps mView;
-    private SessionManager mSesManager;
+    private ISessionListener mSesListener;
     private OpenTokAuthManager mAuthManager;
 
     public MainPresenter(@NonNull IRequiredOpenTokViewOps view){
+        ManagerComponent component = DaggerManagerComponent.builder().
+                managerModule(new ManagerModule(this)).build();
         mView = view;
         EventBus.getDefault().register(this);
         if(mView.hasOpenTokViewPermissions()){
-            mSesManager = new SessionManager(this);// todo retain session state(keys etc)
-            mAuthManager = new OpenTokAuthManager().setListener(mSesManager).build();
+            mSesListener = component.getSessionListener();// todo retain session state(keys etc)
+            mAuthManager = component.getAuthManager();
         }
     }
 
@@ -69,11 +78,19 @@ public class MainPresenter  implements  IRequiredPresenterOps{
     }
 
     @Override
-    public void clearAllViews() {
+    public void clearPublisherView() {
         if(mView != null){
-            mView.clearViews();
+            mView.clearPublisherView();
         }
     }
+
+    @Override
+    public void clearSubscriberView() {
+        if(mView != null){
+            mView.clearSubscriberView();
+        }
+    }
+
 
     @Subscribe
     public void onEvent(EventMessage message) {
