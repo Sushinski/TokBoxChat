@@ -9,7 +9,8 @@ public interface IRequiredPresenterOps extends IRequiredOpenTokOps {
     void setView(IRequiredOpenTokViewOps view);
     void onCreate();
     void onStart();
+    void onResume();
     void onPause();
+    void onStop();
     void onDestroy();
-    Context getViewContext();
 }

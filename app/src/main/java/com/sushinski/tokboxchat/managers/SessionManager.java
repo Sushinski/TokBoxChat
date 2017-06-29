@@ -2,6 +2,8 @@ package com.sushinski.tokboxchat.managers;
 
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.view.View;
+
 import com.opentok.android.OpentokError;
 import com.opentok.android.Publisher;
 import com.opentok.android.PublisherKit;
@@ -36,37 +38,38 @@ public class SessionManager implements
 
     @Override
     public void onSessionReceived(OpenTokSession session_auth) {
-        mSession = new Session.Builder(mPresenter.getViewContext(),
+        mSession = new Session.Builder(mPresenter.getAppContext(),
                 session_auth.getApiKey(),
                 session_auth.getSessionId()).build();
         mSession.setSessionListener(this);
         mSession.connect(session_auth.getToken());
+        EventBus.getDefault().post(
+                new EventMessage(
+                        EventMessage.Type.INFO,
+                        R.string.pending_connection,
+                        ""));
     }
 
     @Override
     public void onConnected(Session session) {
-        mPublisher = new Publisher.Builder(mPresenter.getViewContext()).build();
+        mPublisher = new Publisher.Builder(mPresenter.getAppContext()).build();
         mPublisher.setPublisherListener(this);
-        mPresenter.addPublisherView(mPublisher.getView());
+        mPresenter.addPublisherView(getPublisherView());
         mSession.publish(mPublisher);
     }
 
     @Override
     public void onDisconnected(Session session) {
-        /*EventBus.getDefault().post(
-                new EventMessage(
-                        EventMessage.Type.INFO,
-                        R.string.pending_connection,
-                        ""));*/
         mPresenter.clearPublisherView();
     }
 
     @Override
     public void onStreamReceived(Session session, Stream stream) {
         if (mSubscriber == null) {
-            mSubscriber = new Subscriber.Builder(mPresenter.getViewContext(), stream).build();
+            mSubscriber = new Subscriber.Builder(mPresenter.getAppContext(),
+                    stream).build();
             mSession.subscribe(mSubscriber);
-            mPresenter.addSubscriberView(mSubscriber.getView());
+            mPresenter.addSubscriberView(getSubscriberView());
         }
     }
 
@@ -108,5 +111,23 @@ public class SessionManager implements
                         EventMessage.Type.ERROR,
                         R.string.pending_connection,
                         ""));
+    }
+
+    @Override
+    public View getPublisherView(){
+        if(mPublisher != null){
+            return mPublisher.getView();
+        }else{
+            return null;
+        }
+    }
+
+    @Override
+    public View getSubscriberView(){
+        if(mSubscriber != null){
+            return mSubscriber.getView();
+        }else{
+            return null;
+        }
     }
 }

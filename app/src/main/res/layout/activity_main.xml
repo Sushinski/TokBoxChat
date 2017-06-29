@@ -16,7 +16,7 @@
             android:id="@+id/publisher_container"
             android:layout_gravity="bottom|end"
             android:padding="2dp"
-            android:background="#FFFFFF"
+            android:background="@color/colorPrimary"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true" />

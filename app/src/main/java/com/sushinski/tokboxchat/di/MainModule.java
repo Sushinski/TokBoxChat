@@ -19,7 +19,7 @@ public class MainModule {
 
     @Provides
     public IRequiredPresenterOps providePresenter(){
-        return new MainPresenter(mView);
+        return new MainPresenter();
     }
 
     @Provides

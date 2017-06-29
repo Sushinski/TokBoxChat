@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.view.View;
 
+import com.sushinski.tokboxchat.R;
 import com.sushinski.tokboxchat.di.DaggerManagerComponent;
 import com.sushinski.tokboxchat.di.ManagerComponent;
 import com.sushinski.tokboxchat.di.ManagerModule;
@@ -26,31 +27,44 @@ public class MainPresenter  implements  IRequiredPresenterOps{
     private IRequiredOpenTokViewOps mView;
     private ISessionListener mSesListener;
     private OpenTokAuthManager mAuthManager;
+    private String mCurStatusMessage = "";
+    private boolean mViewPermissionsGranted;
 
-    public MainPresenter(@NonNull IRequiredOpenTokViewOps view){
-        ManagerComponent component = DaggerManagerComponent.builder().
-                managerModule(new ManagerModule(this)).build();
+    public MainPresenter(){
+    }
+
+    @Override
+    public void setView(@NonNull IRequiredOpenTokViewOps view) {
         mView = view;
-        if(mView.hasOpenTokViewPermissions()){
+        mViewPermissionsGranted = view.hasOpenTokViewPermissions();
+        if( mViewPermissionsGranted &&
+                (mSesListener == null || mAuthManager == null)){
+            ManagerComponent component = DaggerManagerComponent.builder().
+                    managerModule(new ManagerModule(this)).build();
             mSesListener = component.getSessionListener();
             mAuthManager = component.getAuthManager();
         }
     }
 
-
-    @Override
-    public void setView(IRequiredOpenTokViewOps view) {
-        mView = view;
-    }
-
     @Override
     public void onCreate() {
-
+        if(mView != null){
+            EventBus.getDefault().register(this);
+            mView.showStatusMessage(mCurStatusMessage);
+        }
     }
 
     @Override
     public void onStart() {
-        EventBus.getDefault().register(this);
+        if(mView != null && mViewPermissionsGranted) {
+            addPublisherView(mSesListener.getPublisherView());
+            addSubscriberView(mSesListener.getSubscriberView());
+        }
+    }
+
+    @Override
+    public void onResume() {
+
     }
 
     @Override
@@ -59,15 +73,24 @@ public class MainPresenter  implements  IRequiredPresenterOps{
     }
 
     @Override
-    public void onDestroy() {
-        EventBus.getDefault().unregister(this);
-        mView = null;
+    public void onStop() {
+        clearPublisherView();
+        clearSubscriberView();
     }
 
     @Override
-    public Context getViewContext() {
+    public void onDestroy() {
         if(mView != null) {
-            return mView.getContext();
+            EventBus.getDefault().unregister(this);
+            mViewPermissionsGranted = false;
+            mView = null;
+        }
+    }
+
+    @Override
+    public Context getAppContext() {
+        if(mView != null) {
+            return mView.getAppContext();
         }else{
             return null;
         }
@@ -101,12 +124,21 @@ public class MainPresenter  implements  IRequiredPresenterOps{
         }
     }
 
+    @Override
+    public void showStatusMessage(String message) {
+        mCurStatusMessage = message;
+        if(mView != null){
+            mView.showStatusMessage(mCurStatusMessage);
+        }
+    }
+
 
     @Subscribe
     public void onEvent(EventMessage message) {
         if(mView != null){
-            String message_text = mView.getContext().getString(message.getMessageId());
-            mView.showStatusMessage(message_text);
+            String msg = mView.getAppContext().
+                    getString(message.getMessageId());
+            showStatusMessage(msg);
         }
     }
 }

@@ -3,4 +3,5 @@
     <string name="pending_connection">Waiting for connection</string>
     <string name="requesting_auth">Requesting Auth Keys</string>
     <string name="retrieving_keys">Retrieving auth keys</string>
+    <string name="not_enough_permissions">Grant required permissions and restart</string>
 </resources>

@@ -27,7 +27,6 @@ import javax.inject.Inject;
 
 
 public class MainActivity extends AppCompatActivity implements IRequiredOpenTokViewOps {
-
     private FrameLayout mPublisherViewContainer;
     private RelativeLayout mSubscriberViewContainer;
     private PermissionManager mPermissionManager;
@@ -46,37 +45,7 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
         mStatusString = (TextView) findViewById(R.id.textView3);
         mProgress = (ProgressBar) findViewById(R.id.progressBar2);
         initPresenter();
-    }
-
-    void initPresenter(){
-        FragmentManager fm = getSupportFragmentManager();
-        PresenterHolderFragment phf =
-                (PresenterHolderFragment) fm.
-                        findFragmentByTag(IRequiredPresenterOps.PRESENTER_TAG);
-        if(phf == null){
-            MainComponent di_component = DaggerMainComponent.builder().
-                    mainModule(new MainModule(this)).build();
-            mPresenter = di_component.getMainPresenter();
-            phf = new PresenterHolderFragment();
-            phf.setRetainedPresenter(mPresenter);
-            fm.beginTransaction().add(phf, IRequiredPresenterOps.PRESENTER_TAG).commit();
-        }else{
-            mPresenter = phf.getRetainedPresenter();
-        }
-        mPresenter.setView(this);
-    }
-
-    @Override
-    public Context getContext() {
-        return this;
-    }
-
-    @Override
-    public boolean hasOpenTokViewPermissions() {
-        if(mPermissionManager == null){
-            mPermissionManager = new PermissionManager(this);
-        }
-        return mPermissionManager.isPermissionsGranted();
+        mPresenter.onCreate();
     }
 
     @Override
@@ -92,11 +61,52 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
     }
 
     @Override
+    public void onStop(){
+        super.onStop();
+        mPresenter.onStop();
+    }
+
+    @Override
     public void onDestroy(){
         super.onDestroy();
         mPresenter.onDestroy();
     }
 
+    private void initPresenter(){
+        FragmentManager fm = getSupportFragmentManager();
+        PresenterHolderFragment phf =
+                (PresenterHolderFragment) fm.
+                        findFragmentByTag(IRequiredPresenterOps.PRESENTER_TAG);
+        if(phf == null){
+            MainComponent di_component = DaggerMainComponent.builder().
+                    mainModule(new MainModule(this)).build();
+            mPresenter = di_component.getMainPresenter();
+            phf = new PresenterHolderFragment();
+            phf.setRetainInstance(true);
+            phf.setRetainedPresenter(mPresenter);
+            fm.beginTransaction().add(phf, IRequiredPresenterOps.PRESENTER_TAG).commit();
+        }else{
+            mPresenter = phf.getRetainedPresenter();
+        }
+        mPresenter.setView(this);
+        if(!hasOpenTokViewPermissions()) {
+            mPresenter.showStatusMessage(getAppContext().
+                    getString(R.string.not_enough_permissions));
+        }
+    }
+
+    @Override
+    public Context getAppContext() {
+        return getApplicationContext();
+    }
+
+    @Override
+    public boolean hasOpenTokViewPermissions() {
+        if(mPermissionManager == null){
+            mPermissionManager = new PermissionManager(this);
+        }
+        return mPermissionManager.isPermissionsGranted();
+    }
 
     @Override
     public void addPublisherView(View view) {
@@ -122,7 +132,6 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
             mPublisherViewContainer.removeView(mPublisherView);
             mPublisherView = null;
         }
-
     }
 
     @Override
@@ -146,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         mPermissionManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        mPresenter.setView(this);
     }
-
-
 }

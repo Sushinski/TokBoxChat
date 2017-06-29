@@ -1,6 +1,7 @@
 package com.sushinski.tokboxchat.managers;
 
 import android.support.annotation.NonNull;
+import android.view.View;
 
 import com.sushinski.tokboxchat.R;
 import com.sushinski.tokboxchat.data_source.RestApiKeySource;
@@ -54,5 +55,15 @@ public class OpenTokAuthManager implements ISessionListener {
         if(mListener != null){
             mListener.onSessionReceived(mSessionAuth);
         }
+    }
+
+    @Override
+    public View getPublisherView() {
+        return null;
+    }
+
+    @Override
+    public View getSubscriberView() {
+        return null;
     }
 }
