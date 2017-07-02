@@ -1,11 +1,18 @@
 package com.sushinski.tokboxchat.interfaces;
 
-
-import android.content.Context;
-import android.view.View;
-
+/**
+ * Defines OpenTok-associated presenter class operations
+ */
 public interface IRequiredPresenterOps extends IRequiredOpenTokOps {
+    /**
+     * preseter tag used for retaining its state
+     */
     String PRESENTER_TAG = "OpenTokPresenter";
+
+    /**
+     * Assignes view to presenter
+     * @param view OpenTok-enabled view
+     */
     void setView(IRequiredOpenTokViewOps view);
     void onCreate();
     void onStart();
@@ -13,6 +20,15 @@ public interface IRequiredPresenterOps extends IRequiredOpenTokOps {
     void onPause();
     void onStop();
     void onDestroy();
+
+    /**
+     * Inits presenter lifecycle
+     */
     void initLifecycle();
-    void closeLifecycle();
+
+    /**
+     * Stops presenter lifecycle
+     * @param re_init - Re-init lifecycle flag
+     */
+    void closeLifecycle(boolean re_init);
 }

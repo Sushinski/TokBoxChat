@@ -8,8 +8,8 @@ import android.view.View;
 import com.sushinski.tokboxchat.di.DaggerManagerComponent;
 import com.sushinski.tokboxchat.di.ManagerComponent;
 import com.sushinski.tokboxchat.di.ManagerModule;
-import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
 import com.sushinski.tokboxchat.interfaces.IRequiredOpenTokViewOps;
+import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
 import com.sushinski.tokboxchat.interfaces.ISessionInteractor;
 import com.sushinski.tokboxchat.managers.OpenTokAuthManager;
 import com.sushinski.tokboxchat.model.EventMessage;
@@ -17,6 +17,9 @@ import com.sushinski.tokboxchat.model.EventMessage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+/**
+ * OpenTok associated presenter implementation class
+ */
 public class MainPresenter  implements  IRequiredPresenterOps{
     private IRequiredOpenTokViewOps mView;
     private ISessionInteractor mSesInteractor;
@@ -27,6 +30,13 @@ public class MainPresenter  implements  IRequiredPresenterOps{
     public MainPresenter(){
     }
 
+    /**
+     * Assigns OpenTok-permitted view for interact with
+     * Subscribes to eventbus events
+     * Inits Auth an session managers
+     * Starts lifecycle
+     * @param view OpenTok-enabled view
+     */
     @Override
     public void setView(@NonNull IRequiredOpenTokViewOps view) {
         if(view.hasOpenTokViewPermissions()) {
@@ -39,11 +49,12 @@ public class MainPresenter  implements  IRequiredPresenterOps{
                 mAuthManager = mComponent.getAuthManager();
                 initLifecycle();
             }
-        }else {
-            mView = null;
         }
     }
 
+    /**
+     * Starts auth & opentok session lifecycle
+     */
     @Override
     public void initLifecycle(){
         if(mAuthManager != null){
@@ -51,27 +62,32 @@ public class MainPresenter  implements  IRequiredPresenterOps{
         }
     }
 
+    /**
+     * Closes auth and opentok sessions lifecycles
+     * @param re_init - Re-init lifecycle flag
+     */
     @Override
-    public void closeLifecycle() {
+    public void closeLifecycle(boolean re_init) {
         if(mAuthManager != null){
             mAuthManager.close();
-            EventBus.getDefault().unregister(this);
+        }
+        if(re_init){
+            initLifecycle();
         }
     }
+
 
     @Override
     public void onCreate() {
         if(mView != null){
             mView.showStatusMessage(mCurStatusMessageId);
+            addPublisherView(mSesInteractor.getPublisherView());
+            addSubscriberView(mSesInteractor.getSubscriberView());
         }
     }
 
     @Override
     public void onStart() {
-        if(mView != null) {
-            addPublisherView(mSesInteractor.getPublisherView());
-            addSubscriberView(mSesInteractor.getSubscriberView());
-        }
     }
 
     @Override
@@ -86,14 +102,14 @@ public class MainPresenter  implements  IRequiredPresenterOps{
 
     @Override
     public void onStop() {
-        clearPublisherView();
-        clearSubscriberView();
-        EventBus.getDefault().unregister(this);
     }
 
     @Override
     public void onDestroy() {
         if(mView != null) {
+            EventBus.getDefault().unregister(this); // cancel evenbus registration
+            clearPublisherView(); // clear associated views
+            clearSubscriberView();
             mView = null;
         }
     }
@@ -137,12 +153,16 @@ public class MainPresenter  implements  IRequiredPresenterOps{
 
     @Override
     public void showStatusMessage(int message_id) {
-        mCurStatusMessageId = message_id;
+        mCurStatusMessageId = message_id; // save current message id foe retaining purposes
         if(mView != null){
             mView.showStatusMessage(message_id);
         }
     }
 
+    /**
+     * EventBus events receiver
+     * @param message Event message received
+     */
     @Subscribe
     public void onEvent(EventMessage message) {
         showStatusMessage(message.getMessageId());

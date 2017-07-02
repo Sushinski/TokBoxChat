@@ -1,14 +1,16 @@
 package com.sushinski.tokboxchat.view;
 
 import android.content.Context;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
-import com.sushinski.tokboxchat.OpenTokApplication;
 import com.sushinski.tokboxchat.R;
-import com.sushinski.tokboxchat.data_source.PresenterHolderFragment;
 import com.sushinski.tokboxchat.di.DaggerMainComponent;
 import com.sushinski.tokboxchat.di.MainComponent;
 import com.sushinski.tokboxchat.di.MainModule;
@@ -16,19 +18,8 @@ import com.sushinski.tokboxchat.interfaces.IRequiredOpenTokViewOps;
 import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
 import com.sushinski.tokboxchat.managers.PermissionManager;
 import com.sushinski.tokboxchat.model.EventMessage;
-import com.sushinski.tokboxchat.presenter.MainPresenter;
-
-import android.support.annotation.NonNull;
-
-import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import org.greenrobot.eventbus.EventBus;
-
-import javax.inject.Inject;
 
 
 public class MainActivity extends AppCompatActivity implements IRequiredOpenTokViewOps {
@@ -63,6 +54,12 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
     }
 
     @Override
+    public void onResume(){
+        super.onResume();
+        mPresenter.onResume();
+    }
+
+    @Override
     public void onPause(){
         super.onPause();
         mPresenter.onPause();
@@ -80,13 +77,18 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
         mPresenter.onDestroy();
     }
 
+    @Override
+    public void onBackPressed() {
+        mPresenter.closeLifecycle(false);
+        super.onBackPressed();
+    }
+
     private void initPresenter(){
         if(!hasOpenTokViewPermissions()) {
             EventBus.getDefault().post(new EventMessage(EventMessage.Type.INFO,
-                    R.string.not_enough_permissions, ""));
+                    R.string.not_enough_permissions));
         }else{
             mPresenter.setView(this);
-            //mPresenter.initLifecycle();
         }
     }
 

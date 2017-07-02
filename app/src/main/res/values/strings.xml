@@ -1,9 +1,11 @@
 <resources>
     <string name="app_name">TokBoxChat</string>
-    <string name="pending_connection">Waiting for connection</string>
+    <string name="pending_connection">Waiting for incoming connection</string>
     <string name="requesting_auth">Requesting Auth Keys</string>
-    <string name="retrieving_keys">Retrieving auth keys</string>
     <string name="not_enough_permissions">Grant required permissions and restart</string>
     <string name="session_closed">Session closed</string>
     <string name="permission_explanation">This app needs access to your camera and mic to make video calls</string>
+    <string name="creating_session">Creating session</string>
+    <string name="session_error">Session error, reconnect.</string>
+    <string name="close_remote">Closing remote session</string>
 </resources>

@@ -1,14 +1,10 @@
 package com.sushinski.tokboxchat.di;
 
-import android.app.Activity;
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
 import com.sushinski.tokboxchat.data_source.PresenterHolderFragment;
-import com.sushinski.tokboxchat.data_source.UniqueAppKeySource;
-import com.sushinski.tokboxchat.interfaces.IRequiredOpenTokViewOps;
 import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
 import com.sushinski.tokboxchat.presenter.MainPresenter;
 
@@ -19,11 +15,13 @@ import dagger.Provides;
 
 @Module
 public class MainModule {
-    private AppCompatActivity mActivity;
+    private final AppCompatActivity mActivity;
+
     public MainModule(@NonNull AppCompatActivity activity){
         this.mActivity = activity;
 
     }
+
     @Provides
     @Singleton
     public IRequiredPresenterOps providePresenter(){

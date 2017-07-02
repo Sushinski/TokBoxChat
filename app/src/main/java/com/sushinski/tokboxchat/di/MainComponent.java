@@ -1,7 +1,5 @@
 package com.sushinski.tokboxchat.di;
 
-import com.sushinski.tokboxchat.data_source.UniqueAppKeySource;
-import com.sushinski.tokboxchat.interfaces.IRequiredOpenTokViewOps;
 import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
 
 import javax.inject.Singleton;

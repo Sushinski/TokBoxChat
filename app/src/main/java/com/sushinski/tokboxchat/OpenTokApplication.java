@@ -1,9 +1,10 @@
 package com.sushinski.tokboxchat;
 
 import android.app.Application;
-import android.support.annotation.NonNull;
 
-import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
+import com.crashlytics.android.Crashlytics;
+
+import io.fabric.sdk.android.Fabric;
 
 
 public class OpenTokApplication extends Application {
@@ -13,11 +14,6 @@ public class OpenTokApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        //Fabric.with(this, new Crashlytics());
-    }
-
-    @Override
-    public void onTerminate() {
-        super.onTerminate();
+        Fabric.with(this, new Crashlytics());
     }
 }

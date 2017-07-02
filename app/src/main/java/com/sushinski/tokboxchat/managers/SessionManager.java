@@ -14,13 +14,14 @@ import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
 import com.sushinski.tokboxchat.interfaces.ISessionInteractor;
 import com.sushinski.tokboxchat.model.EventMessage;
 import com.sushinski.tokboxchat.model.OpenTokSession;
+
 import org.greenrobot.eventbus.EventBus;
 
 public class SessionManager implements
         ISessionInteractor,
         Session.SessionListener,
         PublisherKit.PublisherListener{
-    private IRequiredPresenterOps mPresenter;
+    private final IRequiredPresenterOps mPresenter;
     private Session mSession;
     private Publisher mPublisher;
     private Subscriber mSubscriber;
@@ -40,8 +41,7 @@ public class SessionManager implements
         EventBus.getDefault().post(
                 new EventMessage(
                         EventMessage.Type.INFO,
-                        R.string.pending_connection,
-                        ""));
+                        R.string.creating_session));
     }
 
     @Override
@@ -49,8 +49,8 @@ public class SessionManager implements
         EventBus.getDefault().post(
                 new EventMessage(
                         EventMessage.Type.ERROR,
-                        R.string.session_closed,
-                        ""));
+                        R.string.session_closed));
+        mSession.disconnect();
         if (mSubscriber != null) {
             mPresenter.clearSubscriberView();
             mSubscriber = null;
@@ -59,7 +59,6 @@ public class SessionManager implements
             mPresenter.clearPublisherView();
             mPublisher = null;
         }
-        mPresenter.initLifecycle();
     }
 
     @Override
@@ -68,11 +67,15 @@ public class SessionManager implements
         mPublisher.setPublisherListener(this);
         mPresenter.addPublisherView(getPublisherView());
         mSession.publish(mPublisher);
+        EventBus.getDefault().post(
+                new EventMessage(
+                        EventMessage.Type.ERROR,
+                        R.string.pending_connection));
     }
 
     @Override
     public void onDisconnected(Session session) {
-        mPresenter.closeLifecycle();
+        //mPresenter.closeLifecycle(true);
     }
 
     @Override
@@ -88,7 +91,7 @@ public class SessionManager implements
 
     @Override
     public void onStreamDropped(Session session, Stream stream) {
-        mSession.disconnect();
+        mPresenter.closeLifecycle(true);
     }
 
     @Override
@@ -96,8 +99,7 @@ public class SessionManager implements
         EventBus.getDefault().post(
                 new EventMessage(
                         EventMessage.Type.ERROR,
-                        R.string.pending_connection,
-                        ""));
+                        R.string.session_error));
         mSession.disconnect();
     }
 
@@ -107,7 +109,6 @@ public class SessionManager implements
 
     @Override
     public void onStreamDestroyed(PublisherKit publisherKit, Stream stream) {
-        mSession.disconnect();
     }
 
     @Override
@@ -115,8 +116,7 @@ public class SessionManager implements
         EventBus.getDefault().post(
                 new EventMessage(
                         EventMessage.Type.ERROR,
-                        R.string.pending_connection,
-                        ""));
+                        R.string.session_error));
         mSession.disconnect();
     }
 

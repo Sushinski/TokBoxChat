@@ -4,7 +4,9 @@ import android.support.v4.app.Fragment;
 
 import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
 
-
+/**
+ * Presenter holder fragment class used for retaining presenter instance
+ */
 public class PresenterHolderFragment extends Fragment {
     private IRequiredPresenterOps mPresenter;
 
@@ -16,6 +18,10 @@ public class PresenterHolderFragment extends Fragment {
         mPresenter = presenter;
     }
 
+    /**
+     * Gets class-associated retained presenter instance
+     * @return rretained presenter instance
+     */
     public IRequiredPresenterOps getRetainedPresenter(){
         return mPresenter;
     }
