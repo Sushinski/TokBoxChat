@@ -1,7 +1,6 @@
 package com.sushinski.tokboxchat.managers;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.view.View;
 
 import com.opentok.android.OpentokError;
@@ -12,15 +11,13 @@ import com.opentok.android.Stream;
 import com.opentok.android.Subscriber;
 import com.sushinski.tokboxchat.R;
 import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
-import com.sushinski.tokboxchat.interfaces.ISessionListener;
+import com.sushinski.tokboxchat.interfaces.ISessionInteractor;
 import com.sushinski.tokboxchat.model.EventMessage;
 import com.sushinski.tokboxchat.model.OpenTokSession;
 import org.greenrobot.eventbus.EventBus;
 
-import javax.inject.Inject;
-
 public class SessionManager implements
-        ISessionListener,
+        ISessionInteractor,
         Session.SessionListener,
         PublisherKit.PublisherListener{
     private IRequiredPresenterOps mPresenter;
@@ -28,16 +25,13 @@ public class SessionManager implements
     private Publisher mPublisher;
     private Subscriber mSubscriber;
 
-    @Inject
-    public SessionManager(){
-    }
 
     public SessionManager(@NonNull IRequiredPresenterOps presenter){
         mPresenter = presenter;
     }
 
     @Override
-    public void onSessionReceived(OpenTokSession session_auth) {
+    public void onAuthReceived(OpenTokSession session_auth) {
         mSession = new Session.Builder(mPresenter.getAppContext(),
                 session_auth.getApiKey(),
                 session_auth.getSessionId()).build();
@@ -51,6 +45,24 @@ public class SessionManager implements
     }
 
     @Override
+    public void onAuthClosed() {
+        EventBus.getDefault().post(
+                new EventMessage(
+                        EventMessage.Type.ERROR,
+                        R.string.session_closed,
+                        ""));
+        if (mSubscriber != null) {
+            mPresenter.clearSubscriberView();
+            mSubscriber = null;
+        }
+        if(mPublisher != null){
+            mPresenter.clearPublisherView();
+            mPublisher = null;
+        }
+        mPresenter.initLifecycle();
+    }
+
+    @Override
     public void onConnected(Session session) {
         mPublisher = new Publisher.Builder(mPresenter.getAppContext()).build();
         mPublisher.setPublisherListener(this);
@@ -60,7 +72,7 @@ public class SessionManager implements
 
     @Override
     public void onDisconnected(Session session) {
-        mPresenter.clearPublisherView();
+        mPresenter.closeLifecycle();
     }
 
     @Override
@@ -76,15 +88,7 @@ public class SessionManager implements
 
     @Override
     public void onStreamDropped(Session session, Stream stream) {
-        if (mSubscriber != null) {
-            mSubscriber = null;
-            mPresenter.clearSubscriberView();
-        }
-        EventBus.getDefault().post(
-                new EventMessage(
-                        EventMessage.Type.INFO,
-                        R.string.pending_connection,
-                        ""));
+        mSession.disconnect();
     }
 
     @Override
@@ -94,6 +98,7 @@ public class SessionManager implements
                         EventMessage.Type.ERROR,
                         R.string.pending_connection,
                         ""));
+        mSession.disconnect();
     }
 
     @Override
@@ -102,6 +107,7 @@ public class SessionManager implements
 
     @Override
     public void onStreamDestroyed(PublisherKit publisherKit, Stream stream) {
+        mSession.disconnect();
     }
 
     @Override
@@ -111,6 +117,7 @@ public class SessionManager implements
                         EventMessage.Type.ERROR,
                         R.string.pending_connection,
                         ""));
+        mSession.disconnect();
     }
 
     @Override

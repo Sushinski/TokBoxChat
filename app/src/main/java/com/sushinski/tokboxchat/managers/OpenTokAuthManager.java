@@ -4,66 +4,39 @@ import android.support.annotation.NonNull;
 import android.view.View;
 
 import com.sushinski.tokboxchat.R;
-import com.sushinski.tokboxchat.data_source.RestApiKeySource;
-import com.sushinski.tokboxchat.interfaces.ISessionListener;
-import com.sushinski.tokboxchat.interfaces.ISessionService;
+import com.sushinski.tokboxchat.data_source.UniqueAppKeySource;
+import com.sushinski.tokboxchat.interfaces.ISessionInteractor;
+import com.sushinski.tokboxchat.interfaces.IAuthService;
 import com.sushinski.tokboxchat.model.EventMessage;
 import com.sushinski.tokboxchat.model.OpenTokSession;
 
 import org.greenrobot.eventbus.EventBus;
 
-public class OpenTokAuthManager implements ISessionListener {
-    private OpenTokSession mSessionAuth;
-    private ISessionService mSessionKeySource;
-    private ISessionListener mListener = null;
+import javax.inject.Inject;
 
-    public OpenTokAuthManager(){
-    }
+public class OpenTokAuthManager{
+    private IAuthService mSessionKeySource;
+    private ISessionInteractor mListener = null;
+    private UniqueAppKeySource mUniqueKeySource = null;
 
-    public OpenTokAuthManager setListener(ISessionListener listener){
+    public OpenTokAuthManager(@NonNull ISessionInteractor listener,
+                              @NonNull IAuthService session_key_source,
+                              @NonNull UniqueAppKeySource source){
         mListener = listener;
-        return this;
-    }
-
-    public OpenTokAuthManager setKeySource(ISessionService session_key_source){
         mSessionKeySource = session_key_source;
-        return this;
+        mUniqueKeySource = source;
     }
 
-    public OpenTokAuthManager build(){
+    public void open(){
         EventBus.getDefault().post(
                 new EventMessage(
                         EventMessage.Type.INFO,
                         R.string.requesting_auth,
                         ""));
-        mSessionKeySource.getSession(this);
-        return this;
+        mSessionKeySource.openAuthSession(mListener, mUniqueKeySource.getUniqueAppKey());
     }
 
-    public OpenTokSession getSessionAuth(){
-        return mSessionAuth;
-    }
-
-    @Override
-    public void onSessionReceived(OpenTokSession session) {
-        mSessionAuth = session;
-        EventBus.getDefault().post(
-                new EventMessage(
-                        EventMessage.Type.INFO,
-                        R.string.pending_connection,
-                        ""));
-        if(mListener != null){
-            mListener.onSessionReceived(mSessionAuth);
-        }
-    }
-
-    @Override
-    public View getPublisherView() {
-        return null;
-    }
-
-    @Override
-    public View getSubscriberView() {
-        return null;
+    public void close(){
+       mSessionKeySource.closeAuthSession(mListener);
     }
 }

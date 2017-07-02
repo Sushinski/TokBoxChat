@@ -4,8 +4,9 @@ import android.view.View;
 
 import com.sushinski.tokboxchat.model.OpenTokSession;
 
-public interface ISessionListener {
-    void onSessionReceived(OpenTokSession session);
+public interface ISessionInteractor {
+    void onAuthReceived(OpenTokSession session);
+    void onAuthClosed();
     View getPublisherView();
     View getSubscriberView();
 

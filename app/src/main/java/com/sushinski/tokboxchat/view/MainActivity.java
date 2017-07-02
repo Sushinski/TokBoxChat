@@ -6,6 +6,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import com.sushinski.tokboxchat.OpenTokApplication;
 import com.sushinski.tokboxchat.R;
 import com.sushinski.tokboxchat.data_source.PresenterHolderFragment;
 import com.sushinski.tokboxchat.di.DaggerMainComponent;
@@ -14,6 +15,7 @@ import com.sushinski.tokboxchat.di.MainModule;
 import com.sushinski.tokboxchat.interfaces.IRequiredOpenTokViewOps;
 import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
 import com.sushinski.tokboxchat.managers.PermissionManager;
+import com.sushinski.tokboxchat.model.EventMessage;
 import com.sushinski.tokboxchat.presenter.MainPresenter;
 
 import android.support.annotation.NonNull;
@@ -23,6 +25,9 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import org.greenrobot.eventbus.EventBus;
+
 import javax.inject.Inject;
 
 
@@ -44,6 +49,9 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
         mSubscriberViewContainer = (RelativeLayout)findViewById(R.id.subscriber_container);
         mStatusString = (TextView) findViewById(R.id.textView3);
         mProgress = (ProgressBar) findViewById(R.id.progressBar2);
+        MainComponent di_component = DaggerMainComponent.builder().
+                mainModule(new MainModule(this)).build();
+        mPresenter = di_component.getMainPresenter();
         initPresenter();
         mPresenter.onCreate();
     }
@@ -73,25 +81,12 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
     }
 
     private void initPresenter(){
-        FragmentManager fm = getSupportFragmentManager();
-        PresenterHolderFragment phf =
-                (PresenterHolderFragment) fm.
-                        findFragmentByTag(IRequiredPresenterOps.PRESENTER_TAG);
-        if(phf == null){
-            MainComponent di_component = DaggerMainComponent.builder().
-                    mainModule(new MainModule(this)).build();
-            mPresenter = di_component.getMainPresenter();
-            phf = new PresenterHolderFragment();
-            phf.setRetainInstance(true);
-            phf.setRetainedPresenter(mPresenter);
-            fm.beginTransaction().add(phf, IRequiredPresenterOps.PRESENTER_TAG).commit();
-        }else{
-            mPresenter = phf.getRetainedPresenter();
-        }
-        mPresenter.setView(this);
         if(!hasOpenTokViewPermissions()) {
-            mPresenter.showStatusMessage(getAppContext().
-                    getString(R.string.not_enough_permissions));
+            EventBus.getDefault().post(new EventMessage(EventMessage.Type.INFO,
+                    R.string.not_enough_permissions, ""));
+        }else{
+            mPresenter.setView(this);
+            //mPresenter.initLifecycle();
         }
     }
 
@@ -145,8 +140,8 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
     }
 
     @Override
-    public void showStatusMessage(String message) {
-        mStatusString.setText(message);
+    public void showStatusMessage(int message_id) {
+        mStatusString.setText(getResources().getText(message_id));
     }
 
     @Override
@@ -155,6 +150,6 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         mPermissionManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        mPresenter.setView(this);
+        initPresenter();
     }
 }

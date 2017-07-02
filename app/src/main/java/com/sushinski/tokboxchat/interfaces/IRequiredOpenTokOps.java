@@ -10,5 +10,5 @@ public interface IRequiredOpenTokOps {
     void addSubscriberView(View view);
     void clearPublisherView();
     void clearSubscriberView();
-    void showStatusMessage(String message);
+    void showStatusMessage(int message_id);
 }

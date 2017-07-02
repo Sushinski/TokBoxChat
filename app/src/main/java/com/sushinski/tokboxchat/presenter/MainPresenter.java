@@ -5,60 +5,72 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.view.View;
 
-import com.sushinski.tokboxchat.R;
 import com.sushinski.tokboxchat.di.DaggerManagerComponent;
 import com.sushinski.tokboxchat.di.ManagerComponent;
 import com.sushinski.tokboxchat.di.ManagerModule;
 import com.sushinski.tokboxchat.interfaces.IRequiredPresenterOps;
 import com.sushinski.tokboxchat.interfaces.IRequiredOpenTokViewOps;
-import com.sushinski.tokboxchat.interfaces.ISessionListener;
+import com.sushinski.tokboxchat.interfaces.ISessionInteractor;
 import com.sushinski.tokboxchat.managers.OpenTokAuthManager;
-import com.sushinski.tokboxchat.managers.SessionManager;
 import com.sushinski.tokboxchat.model.EventMessage;
-import com.sushinski.tokboxchat.model.OpenTokSession;
-import com.sushinski.tokboxchat.view.MainActivity;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-import javax.inject.Inject;
-
 public class MainPresenter  implements  IRequiredPresenterOps{
     private IRequiredOpenTokViewOps mView;
-    private ISessionListener mSesListener;
+    private ISessionInteractor mSesInteractor;
     private OpenTokAuthManager mAuthManager;
-    private String mCurStatusMessage = "";
-    private boolean mViewPermissionsGranted;
+    private int mCurStatusMessageId = 0;
+    private ManagerComponent mComponent;
 
     public MainPresenter(){
     }
 
     @Override
     public void setView(@NonNull IRequiredOpenTokViewOps view) {
-        mView = view;
-        mViewPermissionsGranted = view.hasOpenTokViewPermissions();
-        if( mViewPermissionsGranted &&
-                (mSesListener == null || mAuthManager == null)){
-            ManagerComponent component = DaggerManagerComponent.builder().
-                    managerModule(new ManagerModule(this)).build();
-            mSesListener = component.getSessionListener();
-            mAuthManager = component.getAuthManager();
+        if(view.hasOpenTokViewPermissions()) {
+            mView = view;
+            EventBus.getDefault().register(this);
+            if(mComponent == null){
+                mComponent = DaggerManagerComponent.builder().
+                        managerModule(new ManagerModule(this)).build();
+                mSesInteractor = mComponent.getSessionListener();
+                mAuthManager = mComponent.getAuthManager();
+                initLifecycle();
+            }
+        }else {
+            mView = null;
+        }
+    }
+
+    @Override
+    public void initLifecycle(){
+        if(mAuthManager != null){
+            mAuthManager.open();
+        }
+    }
+
+    @Override
+    public void closeLifecycle() {
+        if(mAuthManager != null){
+            mAuthManager.close();
+            EventBus.getDefault().unregister(this);
         }
     }
 
     @Override
     public void onCreate() {
         if(mView != null){
-            EventBus.getDefault().register(this);
-            mView.showStatusMessage(mCurStatusMessage);
+            mView.showStatusMessage(mCurStatusMessageId);
         }
     }
 
     @Override
     public void onStart() {
-        if(mView != null && mViewPermissionsGranted) {
-            addPublisherView(mSesListener.getPublisherView());
-            addSubscriberView(mSesListener.getSubscriberView());
+        if(mView != null) {
+            addPublisherView(mSesInteractor.getPublisherView());
+            addSubscriberView(mSesInteractor.getSubscriberView());
         }
     }
 
@@ -76,13 +88,12 @@ public class MainPresenter  implements  IRequiredPresenterOps{
     public void onStop() {
         clearPublisherView();
         clearSubscriberView();
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
     public void onDestroy() {
         if(mView != null) {
-            EventBus.getDefault().unregister(this);
-            mViewPermissionsGranted = false;
             mView = null;
         }
     }
@@ -125,20 +136,15 @@ public class MainPresenter  implements  IRequiredPresenterOps{
     }
 
     @Override
-    public void showStatusMessage(String message) {
-        mCurStatusMessage = message;
+    public void showStatusMessage(int message_id) {
+        mCurStatusMessageId = message_id;
         if(mView != null){
-            mView.showStatusMessage(mCurStatusMessage);
+            mView.showStatusMessage(message_id);
         }
     }
 
-
     @Subscribe
     public void onEvent(EventMessage message) {
-        if(mView != null){
-            String msg = mView.getAppContext().
-                    getString(message.getMessageId());
-            showStatusMessage(msg);
-        }
+        showStatusMessage(message.getMessageId());
     }
 }

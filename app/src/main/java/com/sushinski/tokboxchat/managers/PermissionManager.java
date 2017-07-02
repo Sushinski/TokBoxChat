@@ -3,14 +3,8 @@ package com.sushinski.tokboxchat.managers;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-
-import com.opentok.android.Session;
-
+import com.sushinski.tokboxchat.R;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -39,7 +33,7 @@ public class PermissionManager {
         } else {
             mIsPermissionsGranted = false;
                 EasyPermissions.requestPermissions(mActivity,
-                        "This app needs access to your camera and mic to make video calls",
+                        mActivity.getResources().getString(R.string.permission_explanation),
                         RC_VIDEO_APP_PERM, perms);
         }
     }
