@@ -20,16 +20,20 @@ public class LocalKeySource implements IAuthService {
     }
 
     @Override
-    public void openAuthSession(ISessionInteractor listener, String unique_app_key) {
+    public void openAuthSession(final ISessionInteractor listener, String unique_app_key) {
         OpenTokSession session = new OpenTokSession();
         session.apiKey = API_KEY;
         session.sessionId = SESSION_ID;
         session.token = TOKEN;
-        listener.onAuthReceived(session);
+        if(listener != null) {
+            listener.onAuthReceived(session);
+        }
     }
 
     @Override
-    public void closeAuthSession(ISessionInteractor listener) {
-
+    public void closeAuthSession(final ISessionInteractor listener) {
+        if(listener != null){
+            listener.onAuthClosed();
+        }
     }
 }
