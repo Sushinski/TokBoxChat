@@ -46,10 +46,6 @@ public class SessionManager implements
 
     @Override
     public void onAuthClosed() {
-        EventBus.getDefault().post(
-                new EventMessage(
-                        EventMessage.Type.ERROR,
-                        R.string.session_closed));
         mSession.disconnect();
         if (mSubscriber != null) {
             mPresenter.clearSubscriberView();
@@ -75,7 +71,10 @@ public class SessionManager implements
 
     @Override
     public void onDisconnected(Session session) {
-        //mPresenter.closeLifecycle(true);
+        EventBus.getDefault().post(
+                new EventMessage(
+                        EventMessage.Type.ERROR,
+                        R.string.session_closed));
     }
 
     @Override
@@ -100,7 +99,7 @@ public class SessionManager implements
                 new EventMessage(
                         EventMessage.Type.ERROR,
                         R.string.session_error));
-        mSession.disconnect();
+        mPresenter.closeLifecycle(true);
     }
 
     @Override
@@ -117,7 +116,7 @@ public class SessionManager implements
                 new EventMessage(
                         EventMessage.Type.ERROR,
                         R.string.session_error));
-        mSession.disconnect();
+        mPresenter.closeLifecycle(true);
     }
 
     @Override

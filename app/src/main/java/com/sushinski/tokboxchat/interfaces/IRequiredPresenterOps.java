@@ -20,6 +20,7 @@ public interface IRequiredPresenterOps extends IRequiredOpenTokOps {
     void onPause();
     void onStop();
     void onDestroy();
+    void onConfigurationChanged();
 
     /**
      * Inits presenter lifecycle

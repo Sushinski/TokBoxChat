@@ -1,6 +1,7 @@
 package com.sushinski.tokboxchat.view;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -153,5 +154,15 @@ public class MainActivity extends AppCompatActivity implements IRequiredOpenTokV
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         mPermissionManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
         initPresenter();
+    }
+
+    /**
+     * Sets custom layout when orientation changed
+     * @param newConfig
+     */
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        mPresenter.onConfigurationChanged();
+        super.onConfigurationChanged(newConfig);
     }
 }

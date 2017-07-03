@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.view.View;
 
+import com.sushinski.tokboxchat.R;
 import com.sushinski.tokboxchat.di.DaggerManagerComponent;
 import com.sushinski.tokboxchat.di.ManagerComponent;
 import com.sushinski.tokboxchat.di.ManagerModule;
@@ -22,9 +23,8 @@ import org.greenrobot.eventbus.Subscribe;
  */
 public class MainPresenter  implements  IRequiredPresenterOps{
     private IRequiredOpenTokViewOps mView;
-    private ISessionInteractor mSesInteractor;
     private OpenTokAuthManager mAuthManager;
-    private int mCurStatusMessageId = 0;
+    private int mCurStatusMessageId = R.string.init_app;
     private ManagerComponent mComponent;
 
     public MainPresenter(){
@@ -41,13 +41,9 @@ public class MainPresenter  implements  IRequiredPresenterOps{
     public void setView(@NonNull IRequiredOpenTokViewOps view) {
         if(view.hasOpenTokViewPermissions()) {
             mView = view;
-            EventBus.getDefault().register(this);
             if(mComponent == null){
                 mComponent = DaggerManagerComponent.builder().
                         managerModule(new ManagerModule(this)).build();
-                mSesInteractor = mComponent.getSessionListener();
-                mAuthManager = mComponent.getAuthManager();
-                initLifecycle();
             }
         }
     }
@@ -57,9 +53,10 @@ public class MainPresenter  implements  IRequiredPresenterOps{
      */
     @Override
     public void initLifecycle(){
-        if(mAuthManager != null){
-            mAuthManager.open();
+        if(mAuthManager == null){
+            mAuthManager = mComponent.getAuthManager();
         }
+        mAuthManager.open();
     }
 
     /**
@@ -70,24 +67,24 @@ public class MainPresenter  implements  IRequiredPresenterOps{
     public void closeLifecycle(boolean re_init) {
         if(mAuthManager != null){
             mAuthManager.close();
-        }
-        if(re_init){
-            initLifecycle();
+            if(re_init){
+                mAuthManager.open();
+            }
         }
     }
 
-
     @Override
     public void onCreate() {
-        if(mView != null){
-            mView.showStatusMessage(mCurStatusMessageId);
-            addPublisherView(mSesInteractor.getPublisherView());
-            addSubscriberView(mSesInteractor.getSubscriberView());
-        }
     }
 
     @Override
     public void onStart() {
+        if(mView != null){
+            EventBus.getDefault().register(this);
+            mView.showStatusMessage(mCurStatusMessageId);
+            initLifecycle();
+        }
+
     }
 
     @Override
@@ -102,16 +99,19 @@ public class MainPresenter  implements  IRequiredPresenterOps{
 
     @Override
     public void onStop() {
+        if(mView != null) {
+            closeLifecycle(false);
+            EventBus.getDefault().unregister(this); // cancel evenbus registration
+        }
     }
 
     @Override
     public void onDestroy() {
-        if(mView != null) {
-            EventBus.getDefault().unregister(this); // cancel evenbus registration
-            clearPublisherView(); // clear associated views
-            clearSubscriberView();
-            mView = null;
-        }
+        mView = null;
+    }
+
+    @Override
+    public void onConfigurationChanged() {
     }
 
     @Override
